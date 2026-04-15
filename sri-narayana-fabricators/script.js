@@ -25,7 +25,7 @@ function createParticle() {
     vy: (Math.random() - 0.5) * 0.4,
     size: Math.random() * 2 + 0.5,
     alpha: Math.random() * 0.4 + 0.1,
-    color: Math.random() > 0.5 ? '#ff6a00' : '#ffcc00',
+    color: Math.random() > 0.5 ? '#00e5ff' : '#b026ff',
   };
 }
 
@@ -46,7 +46,7 @@ function drawParticles() {
       const dist = Math.sqrt(dx * dx + dy * dy);
       if (dist < 120) {
         ctx.beginPath();
-        ctx.strokeStyle = `rgba(255, 106, 0, ${0.06 * (1 - dist / 120)})`;
+        ctx.strokeStyle = `rgba(0, 229, 255, ${0.06 * (1 - dist / 120)})`;
         ctx.lineWidth = 0.5;
         ctx.moveTo(particles[i].x, particles[i].y);
         ctx.lineTo(particles[j].x, particles[j].y);
@@ -59,10 +59,7 @@ function drawParticles() {
   particles.forEach(p => {
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-    ctx.fillStyle = p.color.replace(')', `, ${p.alpha})`).replace('rgb', 'rgba').replace('#ff6a00', 'rgba(255, 106, 0,').replace('#ffcc00', 'rgba(255, 204, 0,');
-
-    // Fix color rendering
-    const hex = p.color === '#ff6a00' ? [255, 106, 0] : [255, 204, 0];
+    const hex = p.color === '#00e5ff' ? [0, 229, 255] : [176, 38, 255];
     ctx.fillStyle = `rgba(${hex[0]}, ${hex[1]}, ${hex[2]}, ${p.alpha})`;
     ctx.shadowColor = p.color;
     ctx.shadowBlur = 4;
@@ -110,8 +107,8 @@ function createSpark() {
     top: ${startY}px;
     width: ${size}px;
     height: ${size}px;
-    background: ${isGold ? '#ffcc00' : '#ff6a00'};
-    box-shadow: 0 0 ${size * 3}px ${isGold ? '#ffcc00' : '#ff6a00'};
+    background: ${isGold ? '#b026ff' : '#00e5ff'};
+    box-shadow: 0 0 ${size * 3}px ${isGold ? '#b026ff' : '#00e5ff'};
     --dx: ${dx}px;
     --dy: ${dy}px;
     animation-duration: ${duration}s;
@@ -244,7 +241,7 @@ function burstSpark() {
       position: absolute;
       width: ${size}px; height: ${size}px;
       border-radius: 50%;
-      background: ${Math.random() > 0.5 ? '#ffcc00' : '#ff6a00'};
+      background: ${Math.random() > 0.5 ? '#b026ff' : '#00e5ff'};
       left: 50%; top: 50%;
       transform: translate(-50%, -50%);
       pointer-events: none;
@@ -270,20 +267,24 @@ document.head.appendChild(style);
 setInterval(burstSpark, 1200);
 
 // ─── SERVICE CARD TILT EFFECT ──────────────────────────────────────
-document.querySelectorAll('.service-card').forEach(card => {
+document.querySelectorAll('.service-card, .about-card-main, .stat-card, .why-card, .feature-item, .project-card').forEach(card => {
   card.addEventListener('mousemove', (e) => {
     const rect = card.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     const cx = rect.width / 2;
     const cy = rect.height / 2;
-    const rotX = ((y - cy) / cy) * 5;
-    const rotY = ((x - cx) / cx) * 5;
-    card.style.transform = `translateY(-8px) perspective(600px) rotateX(${-rotX}deg) rotateY(${rotY}deg)`;
+    const rotX = ((y - cy) / cy) * 8;
+    const rotY = ((x - cx) / cx) * 8;
+    card.style.transform = `perspective(1000px) rotateX(${-rotX}deg) rotateY(${rotY}deg) scale3d(1.02, 1.02, 1.02)`;
+    card.style.transition = 'transform 0.1s ease';
+    card.style.zIndex = '10';
   });
 
   card.addEventListener('mouseleave', () => {
     card.style.transform = '';
+    card.style.transition = 'transform 0.5s ease, z-index 0.5s ease';
+    card.style.zIndex = '1';
   });
 });
 
@@ -329,7 +330,7 @@ function createHeroScanLine() {
     position: absolute;
     left: 0; right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,106,0,0.4), transparent);
+    background: linear-gradient(90deg, transparent, rgba(0,229,255,0.4), transparent);
     pointer-events: none;
     z-index: 1;
     top: 0;
@@ -409,13 +410,13 @@ document.addEventListener('mousemove', (e) => {
     spark.style.cssText = `
       position: fixed;
       width: ${size}px; height: ${size}px;
-      background: radial-gradient(circle, #ffcc00, #ff6a00);
+      background: radial-gradient(circle, #b026ff, #00e5ff);
       border-radius: 50%;
       pointer-events: none;
       z-index: 9998;
       left: ${e.clientX - size / 2}px;
       top: ${e.clientY - size / 2}px;
-      box-shadow: 0 0 ${size * 2}px #ff6a00;
+      box-shadow: 0 0 ${size * 2}px #00e5ff;
       animation: cursorSpark 0.6s ease-out forwards;
     `;
     document.body.appendChild(spark);
@@ -447,14 +448,33 @@ document.querySelectorAll('.why-card').forEach(card => {
   });
 });
 
-// ─── PAGE LOAD ANIMATION ───────────────────────────────────────────
+// ─── PAGE LOAD ANIMATION & PRELOADER ───────────────────────────────
 window.addEventListener('load', () => {
-  document.body.style.opacity = '0';
-  document.body.style.transition = 'opacity 0.6s ease';
-  setTimeout(() => {
-    document.body.style.opacity = '1';
-  }, 50);
+  const preloader = document.getElementById('preloader');
+  const video = document.getElementById('preloadVideo');
+
+  // Fade in body initially hidden by CSS (if any) or just let the video play out.
+  document.body.style.opacity = '1';
+
+  if (video && preloader) {
+    // If video finishes playing, hide preloader
+    video.addEventListener('ended', () => {
+      preloader.classList.add('fade-out');
+      // allow scrolling if locked
+      document.body.style.overflowY = 'auto';
+    });
+
+    // Timeout safety net just in case video fails or gets stuck
+    setTimeout(() => {
+      if(!preloader.classList.contains('fade-out')) {
+        preloader.classList.add('fade-out');
+        document.body.style.overflowY = 'auto';
+      }
+    }, 6000); // adjust based on video length
+  } else if (preloader) {
+    preloader.classList.add('fade-out');
+  }
 });
 
-console.log('%c🔥 Sri Narayana Fabricators', 'color: #ff6a00; font-family: monospace; font-size: 20px; font-weight: bold;');
-console.log('%cWebsite loaded. Quality Metal Fabrication.', 'color: #ffcc00; font-family: monospace;');
+console.log('%c🔥 Sri Narayana Fabricators', 'color: #00e5ff; font-family: monospace; font-size: 20px; font-weight: bold;');
+console.log('%cWebsite loaded. Quality Metal Fabrication.', 'color: #b026ff; font-family: monospace;');
